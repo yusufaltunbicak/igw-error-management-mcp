@@ -8,11 +8,14 @@ export function registerLookupTools(
 ): void {
   server.tool(
     "igw_products_search",
-    "Search IGW products by name. Returns product list with IDs for use in error filters.",
+    `Search IGW products by name. Returns product list with IDs that can be used in error filter parameters (ProductId).
+
+Example products: "Allianz Sigorta Kapsamlı Kasko", "Bereket Sigorta Trafik", "Doğa Sigorta Tamamlayıcı Sağlık".
+Each product has an ID, name, branch, and associated insurance company.`,
     {
-      query: z.string().optional().describe("Search query for product name"),
-      page: z.number().optional().describe("Page number"),
-      pageSize: z.number().optional().describe("Page size"),
+      query: z.string().optional().describe("Search query for product name (e.g. 'Kasko', 'Trafik', 'Allianz')"),
+      page: z.number().optional().describe("Page number (default 1)"),
+      pageSize: z.number().optional().describe("Page size (default 20)"),
     },
     async ({ query, page, pageSize }) => {
       try {
@@ -29,7 +32,9 @@ export function registerLookupTools(
 
   server.tool(
     "igw_insurance_companies",
-    "List insurance companies available to the current agent. Returns company IDs for use in error filters.",
+    `List all insurance companies available to the current user. Returns company IDs and names for use in error filters (InsuranceCompanyId).
+
+Common companies: Allianz (45), Zurich (18), Doğa Sigorta (43), Bereket (57), Türkiye Sigorta (116), Sompo (61), Quick (110), Katılım Emeklilik (105), Ankara Sigorta (37).`,
     {},
     async () => {
       try {

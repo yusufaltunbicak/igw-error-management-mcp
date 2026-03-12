@@ -13,7 +13,6 @@ export class IgwApiClient {
 
   constructor(config: IgwAuthConfig) {
     this.auth = new IgwAuthManager(config);
-    // Ensure trailing slash so Axios resolves relative paths correctly
     const baseURL = config.baseUrl.endsWith("/")
       ? config.baseUrl
       : config.baseUrl + "/";
@@ -22,7 +21,6 @@ export class IgwApiClient {
       headers: { "Content-Type": "application/json" },
     });
 
-    // Auth interceptor — attach token to every request
     this.client.interceptors.request.use(
       async (req: InternalAxiosRequestConfig) => {
         const token = await this.auth.getValidToken();
@@ -31,7 +29,6 @@ export class IgwApiClient {
       }
     );
 
-    // Response interceptor — retry once on 401
     this.client.interceptors.response.use(undefined, async (error: AxiosError) => {
       const original = error.config;
       if (error.response?.status === 401 && original && !(original as any).__retried) {
@@ -52,12 +49,12 @@ export class IgwApiClient {
   }
 
   async getErrorOperations(filter: Record<string, unknown>): Promise<unknown> {
-    const { data } = await this.client.post("/Errors/Operations", filter);
+    const { data } = await this.client.post("Errors/Operations", filter);
     return data;
   }
 
   async getErrorLogs(filter: Record<string, unknown>): Promise<unknown> {
-    const { data } = await this.client.post("/Errors/Logs", filter);
+    const { data } = await this.client.post("Errors/Logs", filter);
     return data;
   }
 
@@ -74,12 +71,12 @@ export class IgwApiClient {
   // --- Error actions ---
 
   async pinError(body: Record<string, unknown>): Promise<unknown> {
-    const { data } = await this.client.post("/Errors/PinError", body);
+    const { data } = await this.client.post("Errors/PinError", body);
     return data;
   }
 
   async sendErrorReport(body: Record<string, unknown>): Promise<unknown> {
-    const { data } = await this.client.post("/Errors/SendErrorReport", body);
+    const { data } = await this.client.post("Errors/SendErrorReport", body);
     return data;
   }
 
@@ -87,6 +84,33 @@ export class IgwApiClient {
     const { data } = await this.client.post(
       `Errors/SendBugReportByReferenceNo/${encodeURIComponent(referenceNo)}`
     );
+    return data;
+  }
+
+  async updateErrorStatus(body: Record<string, unknown>): Promise<unknown> {
+    const { data } = await this.client.post("Errors/UpdateAnalyzeStatus", body);
+    return data;
+  }
+
+  // --- Reports ---
+
+  async getErrorReport(filter: Record<string, unknown>): Promise<unknown> {
+    const { data } = await this.client.post("Errors/Report", filter);
+    return data;
+  }
+
+  async getErrorReportByBranch(filter: Record<string, unknown>): Promise<unknown> {
+    const { data } = await this.client.post("Errors/Report/ByBranch", filter);
+    return data;
+  }
+
+  async getErrorReportByCompany(filter: Record<string, unknown>): Promise<unknown> {
+    const { data } = await this.client.post("Errors/Report/ByInsuranceCompany", filter);
+    return data;
+  }
+
+  async getErrorReportByAgent(filter: Record<string, unknown>): Promise<unknown> {
+    const { data } = await this.client.post("Errors/Report/ByAgent", filter);
     return data;
   }
 
@@ -110,9 +134,52 @@ export class IgwApiClient {
   }
 }
 
+/**
+ * Truncate result while preserving JSON integrity.
+ * For array responses, truncates at array element boundaries.
+ */
 export function truncateResult(data: unknown): string {
   const json = JSON.stringify(data, null, 2);
   if (json.length <= CHARACTER_LIMIT) return json;
+
+  // Try to find the Errors array and truncate it while keeping ErrorCategories
+  if (typeof data === "object" && data !== null && "Errors" in data && "ErrorCategories" in data) {
+    const obj = data as { ErrorCategories: unknown; Errors: unknown[] };
+    const categoriesJson = JSON.stringify(obj.ErrorCategories, null, 2);
+    const totalErrors = obj.Errors.length;
+
+    // Calculate how many errors we can fit
+    const overhead = 100 + categoriesJson.length; // for wrapper + categories
+    const budget = CHARACTER_LIMIT - overhead;
+    let includedErrors: unknown[] = [];
+
+    let currentSize = 0;
+    for (const error of obj.Errors) {
+      const itemJson = JSON.stringify(error, null, 2);
+      if (currentSize + itemJson.length + 10 > budget) break;
+      includedErrors.push(error);
+      currentSize += itemJson.length + 10;
+    }
+
+    const truncated = {
+      ErrorCategories: obj.ErrorCategories,
+      Errors: includedErrors,
+      _meta: {
+        totalErrors,
+        returnedErrors: includedErrors.length,
+        truncated: includedErrors.length < totalErrors,
+      },
+    };
+    return JSON.stringify(truncated, null, 2);
+  }
+
+  // Fallback: find last complete element boundary
+  const cutPoint = json.lastIndexOf("\n  },", CHARACTER_LIMIT);
+  if (cutPoint > 0) {
+    const sliced = json.slice(0, cutPoint + 4);
+    return sliced + `\n  ...\n]\n\n[truncated — showing first portion of ${json.length} chars]`;
+  }
+
   return json.slice(0, CHARACTER_LIMIT) + "\n\n... [truncated — result exceeded character limit]";
 }
 

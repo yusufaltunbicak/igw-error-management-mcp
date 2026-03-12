@@ -7,6 +7,7 @@ import { IgwAuthConfig } from "./types.js";
 import { DEFAULT_IGW_BASE_URL } from "./constants.js";
 import { registerErrorTools } from "./tools/errors.js";
 import { registerErrorActionTools } from "./tools/error-actions.js";
+import { registerReportTools } from "./tools/reports.js";
 import { registerLookupTools } from "./tools/lookups.js";
 
 function getRequiredEnv(name: string): string {
@@ -34,6 +35,7 @@ const server = new McpServer({
 
 registerErrorTools(server, api);
 registerErrorActionTools(server, api);
+registerReportTools(server, api);
 registerLookupTools(server, api);
 
 const transport = new StdioServerTransport();
