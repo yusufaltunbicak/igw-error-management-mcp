@@ -15,7 +15,18 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for tr
 
 ## Setup
 
-Run this command and replace the credentials with your own:
+Choose your tool below. Replace credentials with your own.
+
+### Environments
+
+| Environment | `IGW_BASE_URL` |
+|-------------|----------------|
+| Test | `https://testgatewayapi.insurapps.net/api` |
+| Production | `https://gatewayapi.insurapps.net/api` |
+
+---
+
+### Claude Code
 
 ```bash
 claude mcp add-json --scope user igw-error-management '{
@@ -30,18 +41,11 @@ claude mcp add-json --scope user igw-error-management '{
 }'
 ```
 
-Restart Claude Code. Done!
-
-### Environments
-
-| Environment | `IGW_BASE_URL` |
-|-------------|----------------|
-| Test | `https://testgatewayapi.insurapps.net/api` |
-| Production | `https://gatewayapi.insurapps.net/api` |
-
 ### Claude Desktop
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+Edit config file:
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
@@ -59,6 +63,102 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   }
 }
 ```
+
+Restart Claude Desktop after saving.
+
+### Cursor
+
+Add to `.cursor/mcp.json` in your project root (or `~/.cursor/mcp.json` for global):
+
+```json
+{
+  "mcpServers": {
+    "igw-error-management": {
+      "command": "npx",
+      "args": ["-y", "igw-error-management-mcp@latest"],
+      "env": {
+        "IGW_BASE_URL": "https://testgatewayapi.insurapps.net/api",
+        "IGW_USERNAME": "your-username",
+        "IGW_PASSWORD": "your-password",
+        "IGW_WEB_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+### Windsurf
+
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "igw-error-management": {
+      "command": "npx",
+      "args": ["-y", "igw-error-management-mcp@latest"],
+      "env": {
+        "IGW_BASE_URL": "https://testgatewayapi.insurapps.net/api",
+        "IGW_USERNAME": "your-username",
+        "IGW_PASSWORD": "your-password",
+        "IGW_WEB_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+### OpenAI Codex CLI
+
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.igw-error-management]
+command = "npx"
+args = ["-y", "igw-error-management-mcp@latest"]
+
+[mcp_servers.igw-error-management.env]
+IGW_BASE_URL = "https://testgatewayapi.insurapps.net/api"
+IGW_USERNAME = "your-username"
+IGW_PASSWORD = "your-password"
+IGW_WEB_API_KEY = "your-api-key"
+```
+
+### Antigravity (Firebase Studio)
+
+Add to `.idx/mcp.json` in your workspace:
+
+```json
+{
+  "mcpServers": {
+    "igw-error-management": {
+      "command": "npx",
+      "args": ["-y", "igw-error-management-mcp@latest"],
+      "env": {
+        "IGW_BASE_URL": "https://testgatewayapi.insurapps.net/api",
+        "IGW_USERNAME": "your-username",
+        "IGW_PASSWORD": "your-password",
+        "IGW_WEB_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+## Example Queries
+
+Once set up, try asking your AI assistant:
+
+- *"Son 24 saatte hangi hatalar var?"*
+- *"Quick Sigorta'daki çözülmemiş hataları göster"*
+- *"Trafik branşında en çok hata veren sigorta şirketleri hangileri?"*
+- *"Bu hatanın request/response detayına bak"*
+- *"Son 1 haftada ConnectionError olan hataları listele"*
+- *"Allianz Sigorta'nın ürünlerinde timeout hatalarını getir"*
+- *"Bu hatayı analiz et, ne olmuş?"*
+- *"Bu hatayı IGW ekibine bug olarak raporla"*
+- *"Hangi sigorta şirketleri aktif?"*
+- *"Kasko ürünlerini ara"*
 
 ## Tools
 
