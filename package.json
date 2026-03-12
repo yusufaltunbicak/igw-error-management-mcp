@@ -1,6 +1,6 @@
 {
   "name": "igw-error-management-mcp",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "MCP server for InsurGateway Error Management — track, analyze, and report errors",
   "type": "module",
   "main": "dist/index.js",
@@ -28,7 +28,7 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.0"
+    "typescript": "^5.9.3"
   },
   "keywords": [
     "mcp",
