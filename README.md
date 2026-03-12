@@ -7,10 +7,11 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for tr
 
 ## Features
 
-- **Error Tracking** — List, filter, and search errors by date, branch, product, company, and status
+- **Error Tracking** — List, filter, sort, and search errors by date, branch, product, company, agent, status, and free text
 - **Error Logs** — View detailed request/response logs for each error
 - **Error Analysis** — Get analysis details with possible causes and suggestions
-- **Error Actions** — Pin errors, send error reports, and file bug reports
+- **Error Actions** — Pin errors, update status, send reports, and file bug reports
+- **Reports** — Success rates, branch/agent/company breakdowns
 - **Lookups** — Search products and list insurance companies for filtering
 
 ## Setup
@@ -157,6 +158,10 @@ Once set up, try asking your AI assistant:
 - *"Allianz Sigorta'nın ürünlerinde timeout hatalarını getir"*
 - *"Bu hatayı analiz et, ne olmuş?"*
 - *"Bu hatayı IGW ekibine bug olarak raporla"*
+- *"Hata mesajında 'araç tarzı' geçen tüm kayıtları bul"*
+- *"Doğa Sigorta'nın başarı oranını göster"*
+- *"Branş bazında hata raporu çek"*
+- *"Bu hatanın durumunu 'Çözüldü' olarak güncelle"*
 - *"Hangi sigorta şirketleri aktif?"*
 - *"Kasko ürünlerini ara"*
 
@@ -166,17 +171,28 @@ Once set up, try asking your AI assistant:
 
 | Tool | Description |
 |------|-------------|
-| `igw_errors_list` | List errors with filters (date range, branch, product, company, status flags) |
+| `igw_errors_list` | List errors with filters, sorting, pagination, and free text search |
+| `igw_errors_summary` | Lightweight error statistics — status counts per operation type |
 | `igw_errors_operations` | Get error operations — which service operations produce errors |
 | `igw_errors_logs` | Get detailed error log entries |
 | `igw_errors_log_detail` | Get full request/response data for a specific error log |
 | `igw_errors_analyze` | Analyze a specific error — possible causes and suggestions |
+
+### Reports (read-only)
+
+| Tool | Description |
+|------|-------------|
+| `igw_errors_success_rate` | Overall success/failure rates (proposals and policies) |
+| `igw_errors_report_by_branch` | Error report broken down by branch (Kasko, Trafik, etc.) |
+| `igw_errors_report_by_company` | Error report broken down by insurance company |
+| `igw_errors_report_by_agent` | Error report broken down by agent |
 
 ### Error Actions (write)
 
 | Tool | Description |
 |------|-------------|
 | `igw_errors_pin` | Pin/unpin an error for tracking |
+| `igw_errors_update_status` | Update error analysis status (Solved, InProgress, UserMistake, etc.) |
 | `igw_errors_send_report` | Send an error report with description to the relevant team |
 | `igw_errors_send_bug_report` | Send a bug report by reference number to InsurGateway |
 
@@ -186,6 +202,31 @@ Once set up, try asking your AI assistant:
 |------|-------------|
 | `igw_products_search` | Search products by name — get product IDs for error filters |
 | `igw_insurance_companies` | List available insurance companies — get company IDs for error filters |
+
+### Key Parameters for `igw_errors_list`
+
+| Parameter | Description |
+|-----------|-------------|
+| `BeginDate` / `EndDate` | Date range (ISO 8601) |
+| `ErrorQuery` | Free text search within error messages |
+| `SortColumn` | Sort by: `GroupCount`, `AgentName`, `LastErrorDate`, `InsuranceCompanyName`, `ProductName` |
+| `SortDescending` | Sort direction (true = highest first) |
+| `PageNumber` / `PageSize` | Pagination (default page size: 10) |
+| `AgentId` | Filter by specific agent |
+| `InsuranceCompanyId` | Filter by insurance company |
+| `ServiceOperationId` | 1 = Teklif (Proposal), 2 = Poliçe (Policy) |
+
+### AnalyzeStatus Values
+
+| Value | Status |
+|-------|--------|
+| 0 | Not Analysed (Analiz Edilmedi) |
+| 1 | In Progress (İnceleniyor) |
+| 2 | Solved (Çözüldü) |
+| 3 | Nothing To Do (Şirket Kuralı / Önlenemez Hata) |
+| 4 | User Mistake (Kullanıcı Hatası) |
+| 5 | Connection Error (Servis Bağlantı Hatası) |
+| 6 | Operation Timeout (Zaman Aşımı) |
 
 ## License
 
