@@ -228,6 +228,28 @@ Once set up, try asking your AI assistant:
 | 5 | Connection Error (Servis Bağlantı Hatası) |
 | 6 | Operation Timeout (Zaman Aşımı) |
 
+## Claude Code Skill (Optional)
+
+[Claude Code Skills](https://docs.anthropic.com/en/docs/claude-code/skills), Claude Code'un belirli araclari daha etkili kullanmasini saglayan ogretilebilir talimat dosyalaridir. Bu repo, IGW hata yonetimi icin ozel bir skill dosyasi (`SKILL.md`) icerir. Skill yuklendiginde Claude Code; tool parametrelerini, is akislarini, hata durumlarini ve best practice'leri bilir — her seferinde aciklamaniza gerek kalmaz.
+
+> **Not:** Skill kurulumu MCP server kurulumundan bagimsizdir. MCP server'i yukledikten sonra opsiyonel olarak skill'i de ekleyebilirsiniz.
+
+### Kurulum
+
+```bash
+# Skill dosyasini Claude Code'a yukle
+claude skill add --name igw-error-management --source-url https://raw.githubusercontent.com/yusufaltunbicak/igw-error-management-mcp/main/SKILL.md
+```
+
+Alternatif olarak, dosyayi manuel indirip yukleyebilirsiniz:
+
+```bash
+# SKILL.md'yi indir ve Claude Code skills dizinine kopyala
+mkdir -p ~/.claude/skills/igw-error-management
+curl -o ~/.claude/skills/igw-error-management/SKILL.md \
+  https://raw.githubusercontent.com/yusufaltunbicak/igw-error-management-mcp/main/SKILL.md
+```
+
 ## License
 
 MIT
