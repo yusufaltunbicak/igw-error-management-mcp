@@ -13,43 +13,30 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for tr
 - **Error Actions** — Pin errors, send error reports, and file bug reports
 - **Lookups** — Search products and list insurance companies for filtering
 
-## Installation
+## Setup (3 steps)
 
-### Via npx (recommended)
+### Step 1 — Add your IGW credentials to your shell profile
 
-```bash
-npx igw-error-management-mcp
-```
-
-### Global Installation
+Open `~/.zshrc` (macOS) or `~/.bashrc` (Linux) and add:
 
 ```bash
-npm install -g igw-error-management-mcp
+# InsurGateway MCP — choose your environment:
+# Test:       https://testgatewayapi.insurapps.net/api
+# Production: https://gatewayapi.insurapps.net/api
+export IGW_BASE_URL="https://testgatewayapi.insurapps.net/api"
+
+export IGW_USERNAME="your-username"
+export IGW_PASSWORD="your-password"
+export IGW_WEB_API_KEY="your-api-key"
 ```
 
-### From Source
+Then reload your shell:
 
 ```bash
-git clone https://github.com/yusufaltunbicak/igw-error-management-mcp.git
-cd igw-error-management-mcp
-npm install
-npm run build
+source ~/.zshrc
 ```
 
-## Configuration
-
-Set environment variables:
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `IGW_BASE_URL` | InsurGateway API base URL | `https://api.insurgateway.com/api` |
-| `IGW_USERNAME` | IGW account username | *required* |
-| `IGW_PASSWORD` | IGW account password | *required* |
-| `IGW_WEB_API_KEY` | IGW Web API key | *required* |
-
-## Quick Start
-
-### Claude Code
+### Step 2 — Add the MCP server to your project
 
 Add to your project's `.mcp.json`:
 
@@ -70,7 +57,15 @@ Add to your project's `.mcp.json`:
 }
 ```
 
-### Claude Desktop
+> **Note:** If your project already has `.mcp.json`, just add the `"igw-error-management"` entry inside `"mcpServers"`.
+
+### Step 3 — Restart Claude Code
+
+Restart Claude Code (or Claude Desktop) and the IGW tools will be available automatically.
+
+That's it! Try asking: *"Son 24 saatte hangi hatalari var?"*
+
+## Claude Desktop
 
 Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
@@ -81,7 +76,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
       "command": "npx",
       "args": ["-y", "igw-error-management-mcp"],
       "env": {
-        "IGW_BASE_URL": "https://api.insurgateway.com/api",
+        "IGW_BASE_URL": "https://testgatewayapi.insurapps.net/api",
         "IGW_USERNAME": "your-username",
         "IGW_PASSWORD": "your-password",
         "IGW_WEB_API_KEY": "your-api-key"
@@ -90,6 +85,24 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
   }
 }
 ```
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `IGW_BASE_URL` | InsurGateway API base URL (see below) | `https://api.insurgateway.com/api` |
+| `IGW_USERNAME` | IGW account username | *required* |
+| `IGW_PASSWORD` | IGW account password | *required* |
+| `IGW_WEB_API_KEY` | IGW Web API key | *required* |
+
+### Available Environments
+
+| Environment | URL |
+|-------------|-----|
+| Test | `https://testgatewayapi.insurapps.net/api` |
+| Production | `https://gatewayapi.insurapps.net/api` |
+
+> **Tip:** Switch environments anytime by changing `IGW_BASE_URL` and restarting Claude Code.
 
 ## Tools
 
@@ -117,6 +130,24 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 |------|-------------|
 | `igw_products_search` | Search products by name — get product IDs for error filters |
 | `igw_insurance_companies` | List available insurance companies — get company IDs for error filters |
+
+## Alternative Installation
+
+### Global install
+
+```bash
+npm install -g igw-error-management-mcp
+```
+
+### From source
+
+```bash
+git clone https://github.com/yusufaltunbicak/igw-error-management-mcp.git
+cd igw-error-management-mcp
+npm install
+npm run build
+npm start
+```
 
 ## License
 
