@@ -199,6 +199,39 @@ Field definitions used to build insurance company request/response mappings. Nee
 
 Example: "Sigortalı Türü key'inin parametresi ne" → `query: "Sigortalı Türü"` → key 3, value type string, parameterized, ParameterId 6 → "Müşteri Türü".
 
+#### Panel catalog tools (read-only, GatewayProUI)
+
+All require `IGW_PANEL_USERNAME` / `IGW_PANEL_PASSWORD`; otherwise absent. All read-only. Filters combine with AND, matching is local and Turkish-case-insensitive, and results paginate with `page` / `pageSize`. Cached tools also accept `refresh`.
+
+Full-fetch + local filter (cached ~10 min):
+
+| Tool | Key filters |
+|------|-------------|
+| `igw_product_branches_list` | query, branchId, branchGroup, category |
+| `igw_related_products_list` | query, productId |
+| `igw_guarantee_descriptions_list` | query, guaranteeDescId, branch(id/name), isActive, isAgentRelated |
+| `igw_guarantee_product_mappings_list` | query, guaranteeDescId, productId, productName, isFreeWord, isSQL |
+| `igw_guarantee_freeword_dependencies_list` | query, productId, guaranteeDescId |
+| `igw_provided_services_list` | query, methodName, insuranceCompany(id/name), productId, productName |
+| `igw_key_relations_list` | query, keyId, keyRelationId, serviceOperationId, branch, agentId, mandatory, isActive, dependent |
+| `igw_parameters_list` | query, parameterId, dependent |
+| `igw_insurance_companies_list` | query, companyId, companyType |
+| `igw_connection_groups_list` | query, insuranceCompany(id/name), category |
+| `igw_outsource_processes_list` | query, insuranceCompany(id/name) |
+| `igw_agents_list` | query, agentId, parentId, agentType, isActive |
+| `igw_agent_connection_infos_list` | query, agentId, insuranceCompany, connectionGroupId, isActive, environmentType |
+| `igw_dynamic_forms_list` | query, formId, agentId, agentName |
+
+Server-side paged (huge tables; filters narrow the fetched page only, they do **not** scan the whole table):
+
+| Tool | ~Rows | Page filters |
+|------|------:|--------------|
+| `igw_agent_connections_list` | 63k | agentId, agentName, insuranceCompany, isActive |
+| `igw_users_list` | 21k | query (name/email/username), role, disabled — returns PII |
+| `igw_action_logs_list` | ~5M | requestId, userName, responseStatus, requestChannel, machineName |
+
+Note: the panel's DataTables endpoints 500 on server-side column search and ignore global search, so filtering is client-side after fetch. For the three paged tools, filters therefore only narrow the current page — to find a specific row walk pages with `page`/`pageSize`.
+
 #### `igw_insurance_companies` — List all insurance companies
 
 No parameters. Returns company IDs and names. Common companies:

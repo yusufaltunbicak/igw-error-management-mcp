@@ -205,9 +205,42 @@ Once set up, try asking your AI assistant:
 | `igw_products_list` | Full product catalog from the GatewayProUI panel — GW product code, insurance company product code(s), branch, online/offline, active status. Requires `IGW_PANEL_USERNAME` / `IGW_PANEL_PASSWORD` |
 | `igw_keys_list` | Full request/response key catalog from the GatewayProUI panel — key Id, name, value type, parameterized flag, resolved parameter (id + name), dependent flag, active status. Requires `IGW_PANEL_USERNAME` / `IGW_PANEL_PASSWORD` |
 
+### Panel Catalog Tools (read-only)
+
+The GatewayProUI panel (`panel.insurapps.net`) exposes many more catalogs. All of the tools below are read-only and require `IGW_PANEL_USERNAME` / `IGW_PANEL_PASSWORD`. The first group is pulled in full and filtered locally (cached ~10 min); the last three are **server-side paged** because the tables are too large to pull whole.
+
+**Full-fetch + local filter (cached):**
+
+| Tool | Panel page | ~Rows |
+|------|-----------|------:|
+| `igw_product_branches_list` | Ürün Branşları | 68 |
+| `igw_related_products_list` | İlişkili Ürün Yönetimi | 13 |
+| `igw_guarantee_descriptions_list` | Teminat Açıklamaları | 175 |
+| `igw_guarantee_product_mappings_list` | Ürün Eşleşmeleri | 2 652 |
+| `igw_guarantee_freeword_dependencies_list` | Serbest Metin Bağımlılıkları | 6 |
+| `igw_provided_services_list` | Kullanıma Açık Servisler | 421 |
+| `igw_key_relations_list` | KeyRelation | 2 211 |
+| `igw_parameters_list` | Parametre Yönetimi | 572 |
+| `igw_insurance_companies_list` | Sigorta Şirketleri (rich) | 89 |
+| `igw_connection_groups_list` | Şirket Bağlantı Grupları | 165 |
+| `igw_outsource_processes_list` | Outsource Process | 169 |
+| `igw_agents_list` | Acente Yönetimi | 2 795 |
+| `igw_agent_connection_infos_list` | Acente Bağlantı Bilgileri | 3 456 |
+| `igw_dynamic_forms_list` | DynamicForm | 598 |
+
+**Server-side paged (`page` / `pageSize`; filters narrow the fetched page only):**
+
+| Tool | Panel page | ~Rows |
+|------|-----------|------:|
+| `igw_agent_connections_list` | Acente Bağlantıları | 63 382 |
+| `igw_users_list` | Kullanıcı Yönetimi (PII) | 21 339 |
+| `igw_action_logs_list` | Action Logs | ~5 000 000 |
+
+> The panel's DataTables endpoints 500 on per-column server-side search and ignore global search, so filtering is done locally after fetching. For the three paged tools this means filters apply to the current page only — they do not scan the whole table.
+
 ### Panel Credentials (optional)
 
-`igw_products_list` and `igw_keys_list` read from the GatewayProUI admin panel (`panel.insurapps.net`) instead of the gateway API. Add these env vars to enable them:
+The panel tools above read from the GatewayProUI admin panel (`panel.insurapps.net`) instead of the gateway API. Add these env vars to enable them:
 
 | Variable | Description |
 |----------|-------------|
@@ -215,7 +248,7 @@ Once set up, try asking your AI assistant:
 | `IGW_PANEL_USERNAME` | Panel login email |
 | `IGW_PANEL_PASSWORD` | Panel login password |
 
-Without these the panel tools (`igw_products_list`, `igw_keys_list`) are simply not registered; everything else works as before.
+Without these the panel tools are simply not registered; everything else works as before.
 
 ### Key Parameters for `igw_errors_list`
 
