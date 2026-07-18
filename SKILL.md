@@ -180,6 +180,25 @@ Richer than `igw_products_search`: returns GW product code (Id), insurance compa
 
 Example: "Anadolu Sigorta'daki konut yangın ürünlerinin GW kodları" → `insuranceCompany: "Anadolu", branch: "Konut Yangın"` → 1523 "Anadolu Sigorta Konut Offline" (offline, şirket kodu 722,732) and 3251 "Anadolu Sigorta Konut" (online, şirket kodu yok).
 
+#### `igw_keys_list` — Request/response key catalog (GatewayProUI panel)
+
+Field definitions used to build insurance company request/response mappings. Needs `IGW_PANEL_USERNAME` / `IGW_PANEL_PASSWORD`; otherwise absent. Returns key Id, name, value type, parameterized flag, ParameterId + resolved ParameterName (resolved from the parameter catalog since the key list leaves it null), Depent (dependent) flag and active status. All filters combine with AND; matching is local and Turkish-case-insensitive.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | string | Substring on key name (e.g. "T.C. Kimlik", "Plaka") |
+| `keyId` | number | Exact key Id lookup |
+| `keyValueType` | string | Value type: "string", "int", "decimal", "datetime", "double", "json" |
+| `parameterized` | boolean | Only parameter-backed keys (true) / non-parameterized (false) |
+| `parameterId` | number | Exact parameter Id the key is bound to |
+| `parameterName` | string | Substring on the resolved parameter name (e.g. "İller", "Marka") |
+| `dependent` | boolean | Filter by the Depent flag (value depends on another key) |
+| `isActive` | boolean | Active / passive status |
+| `refresh` | boolean | Bypass the 10-minute cache |
+| `page` / `pageSize` | number | Pagination over filtered result (default 1 / 50) |
+
+Example: "Sigortalı Türü key'inin parametresi ne" → `query: "Sigortalı Türü"` → key 3, value type string, parameterized, ParameterId 6 → "Müşteri Türü".
+
 #### `igw_insurance_companies` — List all insurance companies
 
 No parameters. Returns company IDs and names. Common companies:

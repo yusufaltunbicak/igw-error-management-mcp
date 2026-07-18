@@ -11,6 +11,7 @@ import { registerErrorActionTools } from "./tools/error-actions.js";
 import { registerReportTools } from "./tools/reports.js";
 import { registerLookupTools } from "./tools/lookups.js";
 import { registerProductTools } from "./tools/products.js";
+import { registerKeyTools } from "./tools/keys.js";
 
 function getRequiredEnv(name: string): string {
   const value = process.env[name];
@@ -50,9 +51,10 @@ if (panelUsername && panelPassword) {
     password: panelPassword,
   });
   registerProductTools(server, panel);
+  registerKeyTools(server, panel);
 } else {
   console.error(
-    "IGW_PANEL_USERNAME / IGW_PANEL_PASSWORD not set — igw_products_list tool disabled"
+    "IGW_PANEL_USERNAME / IGW_PANEL_PASSWORD not set — igw_products_list and igw_keys_list tools disabled"
   );
 }
 

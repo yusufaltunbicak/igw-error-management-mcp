@@ -102,6 +102,25 @@ export interface PanelProduct {
   ProductType: number;
 }
 
+/** Row shape returned by GatewayProUI /Key/GetKeys */
+export interface PanelKey {
+  Id: number;
+  KeyName: string;
+  Parameterized: boolean;
+  ParameterId: number | null;
+  ParameterName: string | null;
+  KeyValueType: string;
+  Depent: boolean;
+  Status: boolean;
+}
+
+/** Row shape returned by GatewayProUI /Parameter/GetParameters */
+export interface PanelParameter {
+  ParameterId: number;
+  ParameterName: string;
+  Dependent: boolean;
+}
+
 export interface IgwPinErrorRequest {
   errorId: number;
   isPinned: boolean;
