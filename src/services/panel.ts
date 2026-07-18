@@ -1,9 +1,9 @@
 import axios, { AxiosResponse } from "axios";
-import { PanelConfig, PanelProduct } from "../types.js";
+import { PanelConfig, PanelProduct, PanelKey, PanelParameter } from "../types.js";
 import { PRODUCTS_CACHE_TTL_MS } from "../constants.js";
 
-interface ProductsCache {
-  data: PanelProduct[];
+interface RowsCache<T> {
+  data: T[];
   fetchedAt: number;
 }
 
@@ -11,11 +11,16 @@ interface ProductsCache {
  * Client for the GatewayProUI admin panel (panel.insurapps.net).
  * Uses classic ASP.NET cookie auth: GET login page for the antiforgery
  * token, POST the form, keep session cookies for subsequent requests.
+ *
+ * Every DataTables-backed list endpoint (/Product/GetProducts,
+ * /Key/GetKeys, /Parameter/GetParameters) 500s when sent per-column
+ * search params, so we fetch the full list in one request and filter
+ * locally. Results are cached per-endpoint for a short TTL.
  */
 export class PanelClient {
   private cookies = new Map<string, string>();
   private loginPromise: Promise<void> | null = null;
-  private cache: ProductsCache | null = null;
+  private caches = new Map<string, RowsCache<unknown>>();
 
   constructor(private readonly config: PanelConfig) {}
 
@@ -97,9 +102,9 @@ export class PanelClient {
     }
   }
 
-  private async fetchProductsRaw(): Promise<PanelProduct[] | null> {
+  private async fetchRowsRaw<T>(path: string): Promise<T[] | null> {
     const res = await axios.post(
-      `${this.baseUrl}/Product/GetProducts`,
+      `${this.baseUrl}/${path}`,
       "draw=1&start=0&length=100000",
       {
         headers: {
@@ -113,7 +118,7 @@ export class PanelClient {
     );
     this.collectCookies(res);
 
-    const body = res.data as { data?: PanelProduct[] } | string;
+    const body = res.data as { data?: T[] } | string;
     if (res.status === 200 && typeof body === "object" && Array.isArray(body?.data)) {
       return body.data;
     }
@@ -121,28 +126,47 @@ export class PanelClient {
     return null;
   }
 
-  /** Fetch the full product list, using a short-lived in-memory cache. */
-  async getAllProducts(refresh = false): Promise<PanelProduct[]> {
+  /**
+   * Fetch a full DataTables list, logging in and retrying once if the
+   * session is stale. Cached per endpoint for a short TTL.
+   */
+  private async getAll<T>(path: string, refresh: boolean): Promise<T[]> {
+    const cached = this.caches.get(path);
     if (
       !refresh &&
-      this.cache &&
-      Date.now() - this.cache.fetchedAt < PRODUCTS_CACHE_TTL_MS
+      cached &&
+      Date.now() - cached.fetchedAt < PRODUCTS_CACHE_TTL_MS
     ) {
-      return this.cache.data;
+      return cached.data as T[];
     }
 
-    let data = this.cookies.size > 0 ? await this.fetchProductsRaw() : null;
+    let data = this.cookies.size > 0 ? await this.fetchRowsRaw<T>(path) : null;
     if (!data) {
       await this.login();
-      data = await this.fetchProductsRaw();
+      data = await this.fetchRowsRaw<T>(path);
     }
     if (!data) {
       throw new Error(
-        "Panel products request failed after login — panel may be down or the account lacks access to /product"
+        `Panel request for ${path} failed after login — panel may be down or the account lacks access`
       );
     }
 
-    this.cache = { data, fetchedAt: Date.now() };
+    this.caches.set(path, { data, fetchedAt: Date.now() });
     return data;
+  }
+
+  /** Full product catalog from /Product/GetProducts. */
+  getAllProducts(refresh = false): Promise<PanelProduct[]> {
+    return this.getAll<PanelProduct>("Product/GetProducts", refresh);
+  }
+
+  /** Full key catalog from /Key/GetKeys. */
+  getAllKeys(refresh = false): Promise<PanelKey[]> {
+    return this.getAll<PanelKey>("Key/GetKeys", refresh);
+  }
+
+  /** Full parameter catalog from /Parameter/GetParameters. */
+  getAllParameters(refresh = false): Promise<PanelParameter[]> {
+    return this.getAll<PanelParameter>("Parameter/GetParameters", refresh);
   }
 }
