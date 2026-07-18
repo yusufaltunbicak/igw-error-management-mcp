@@ -78,6 +78,30 @@ export interface IgwProductSearchParams {
   pageSize?: number;
 }
 
+export interface PanelConfig {
+  baseUrl: string;
+  username: string;
+  password: string;
+}
+
+/** Row shape returned by GatewayProUI /Product/GetProducts */
+export interface PanelProduct {
+  Id: number;
+  Name: string;
+  InsuranceCompanyId: number;
+  InsuranceCompany: string;
+  ProductBranch: string;
+  ProductBranchId: number;
+  InsuranceCompanyProductCode: string | null;
+  Status: boolean;
+  IsOnline: boolean;
+  SaveOfferGuaranteeDetail: boolean;
+  HasPolicyInLastThreeMonths: boolean;
+  IsValidOfflineForProposal: boolean;
+  OfflineErrorExplanation: string | null;
+  ProductType: number;
+}
+
 export interface IgwPinErrorRequest {
   errorId: number;
   isPinned: boolean;

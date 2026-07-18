@@ -202,6 +202,19 @@ Once set up, try asking your AI assistant:
 |------|-------------|
 | `igw_products_search` | Search products by name — get product IDs for error filters |
 | `igw_insurance_companies` | List available insurance companies — get company IDs for error filters |
+| `igw_products_list` | Full product catalog from the GatewayProUI panel — GW product code, insurance company product code(s), branch, online/offline, active status. Requires `IGW_PANEL_USERNAME` / `IGW_PANEL_PASSWORD` |
+
+### Panel Credentials (optional)
+
+`igw_products_list` reads the product catalog from the GatewayProUI admin panel (`panel.insurapps.net`) instead of the gateway API. Add these env vars to enable it:
+
+| Variable | Description |
+|----------|-------------|
+| `IGW_PANEL_BASE_URL` | Panel URL (default `https://panel.insurapps.net`) |
+| `IGW_PANEL_USERNAME` | Panel login email |
+| `IGW_PANEL_PASSWORD` | Panel login password |
+
+Without these the tool is simply not registered; everything else works as before.
 
 ### Key Parameters for `igw_errors_list`
 

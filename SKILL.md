@@ -160,6 +160,26 @@ Error breakdown by acente/agent with success rates.
 
 Returns product IDs for use as filters in other tools.
 
+#### `igw_products_list` — Full product catalog (GatewayProUI panel)
+
+Richer than `igw_products_search`: returns GW product code (Id), insurance company's own product code(s), branch, online/offline and active status. Needs `IGW_PANEL_USERNAME` / `IGW_PANEL_PASSWORD`; otherwise the tool is absent. All filters combine with AND; matching is local and Turkish-case-insensitive.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | string | Substring on product name (e.g. "Konut", "Kasko Offline") |
+| `insuranceCompany` | string | Numeric ID exact (e.g. "7") or name substring (e.g. "Anadolu") |
+| `branch` | string | Numeric branch ID exact or name substring (e.g. "Konut Yangın") |
+| `gwProductId` | number | Exact GW product code lookup (e.g. 1523) |
+| `companyProductCode` | string | Matches one of the comma-separated company codes exactly (e.g. "722") |
+| `isOnline` | boolean | Online (true) / offline (false) products |
+| `isActive` | boolean | Active / passive status |
+| `productType` | number | 0=Default, 1=Yarı Online, 2=Dinamik, 3=AIR |
+| `hasPolicyInLastThreeMonths` | boolean | Produced a policy in the last 3 months |
+| `refresh` | boolean | Bypass the 10-minute cache |
+| `page` / `pageSize` | number | Pagination over filtered result (default 1 / 50) |
+
+Example: "Anadolu Sigorta'daki konut yangın ürünlerinin GW kodları" → `insuranceCompany: "Anadolu", branch: "Konut Yangın"` → 1523 "Anadolu Sigorta Konut Offline" (offline, şirket kodu 722,732) and 3251 "Anadolu Sigorta Konut" (online, şirket kodu yok).
+
 #### `igw_insurance_companies` — List all insurance companies
 
 No parameters. Returns company IDs and names. Common companies:
