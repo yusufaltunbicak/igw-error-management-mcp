@@ -102,10 +102,14 @@ export class PanelClient {
     }
   }
 
-  private async fetchRowsRaw<T>(path: string): Promise<T[] | null> {
+  private async fetchRowsRaw<T>(
+    path: string,
+    start = 0,
+    length = 100000
+  ): Promise<{ data: T[]; recordsTotal: number } | null> {
     const res = await axios.post(
       `${this.baseUrl}/${path}`,
-      "draw=1&start=0&length=100000",
+      `draw=1&start=${start}&length=${length}`,
       {
         headers: {
           Cookie: this.cookieHeader(),
@@ -118,19 +122,22 @@ export class PanelClient {
     );
     this.collectCookies(res);
 
-    const body = res.data as { data?: T[] } | string;
+    const body = res.data as { data?: T[]; recordsTotal?: number } | string;
     if (res.status === 200 && typeof body === "object" && Array.isArray(body?.data)) {
-      return body.data;
+      return { data: body.data, recordsTotal: body.recordsTotal ?? body.data.length };
     }
     // 401 / redirect to login / HTML page → session invalid
     return null;
   }
 
   /**
-   * Fetch a full DataTables list, logging in and retrying once if the
-   * session is stale. Cached per endpoint for a short TTL.
+   * Fetch a full DataTables list (all rows in one request), logging in
+   * and retrying once if the session is stale. Cached per endpoint for a
+   * short TTL. Only safe for endpoints small enough to return fully —
+   * huge tables (users, agent connections, action logs) must use
+   * {@link fetchPage} instead.
    */
-  private async getAll<T>(path: string, refresh: boolean): Promise<T[]> {
+  async fetchAll<T>(path: string, refresh = false): Promise<T[]> {
     const cached = this.caches.get(path);
     if (
       !refresh &&
@@ -140,33 +147,57 @@ export class PanelClient {
       return cached.data as T[];
     }
 
-    let data = this.cookies.size > 0 ? await this.fetchRowsRaw<T>(path) : null;
-    if (!data) {
+    let result = this.cookies.size > 0 ? await this.fetchRowsRaw<T>(path) : null;
+    if (!result) {
       await this.login();
-      data = await this.fetchRowsRaw<T>(path);
+      result = await this.fetchRowsRaw<T>(path);
     }
-    if (!data) {
+    if (!result) {
       throw new Error(
         `Panel request for ${path} failed after login — panel may be down or the account lacks access`
       );
     }
 
-    this.caches.set(path, { data, fetchedAt: Date.now() });
-    return data;
+    this.caches.set(path, { data: result.data, fetchedAt: Date.now() });
+    return result.data;
+  }
+
+  /**
+   * Fetch a single server-side page from a DataTables endpoint. Used for
+   * tables too large to pull in full. Not cached. Returns the page rows
+   * plus the server's total record count.
+   */
+  async fetchPage<T>(
+    path: string,
+    start: number,
+    length: number
+  ): Promise<{ rows: T[]; total: number }> {
+    let result =
+      this.cookies.size > 0 ? await this.fetchRowsRaw<T>(path, start, length) : null;
+    if (!result) {
+      await this.login();
+      result = await this.fetchRowsRaw<T>(path, start, length);
+    }
+    if (!result) {
+      throw new Error(
+        `Panel page request for ${path} failed after login — panel may be down or the account lacks access`
+      );
+    }
+    return { rows: result.data, total: result.recordsTotal };
   }
 
   /** Full product catalog from /Product/GetProducts. */
   getAllProducts(refresh = false): Promise<PanelProduct[]> {
-    return this.getAll<PanelProduct>("Product/GetProducts", refresh);
+    return this.fetchAll<PanelProduct>("Product/GetProducts", refresh);
   }
 
   /** Full key catalog from /Key/GetKeys. */
   getAllKeys(refresh = false): Promise<PanelKey[]> {
-    return this.getAll<PanelKey>("Key/GetKeys", refresh);
+    return this.fetchAll<PanelKey>("Key/GetKeys", refresh);
   }
 
   /** Full parameter catalog from /Parameter/GetParameters. */
   getAllParameters(refresh = false): Promise<PanelParameter[]> {
-    return this.getAll<PanelParameter>("Parameter/GetParameters", refresh);
+    return this.fetchAll<PanelParameter>("Parameter/GetParameters", refresh);
   }
 }
