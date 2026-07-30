@@ -1,8 +1,8 @@
 ---
 name: igw-error-management
-description: MCP skill for IGW (InsurGateway) error management — list, analyze, report, and manage insurance integration errors across test and production environments. Invoke whenever user asks about IGW errors, insurance gateway issues, success rates, or error reports.
+description: MCP skill for IGW (InsurGateway) error management and ManagementConsole traffic inspection across test and production environments. Invoke for IGW errors, insurer request/response patterns, success rates, or reports.
 author: yusufaltunbicak
-version: "2.0.0"
+version: "2.4.0"
 tags:
   - igw
   - insurgateway
@@ -16,6 +16,8 @@ tags:
 # IGW Error Management MCP Skill
 
 Use this skill when the user wants to investigate, analyze, report on, or manage InsurGateway (IGW) integration errors. Covers error listing, log inspection, root cause analysis, success rate reports, and error status management for Turkish insurance integrations.
+
+It also covers read-only ManagementConsole traffic inspection: search correlated logs with any portal identifier and retrieve raw IGW-to-insurer requests or insurer-to-IGW responses without forcing company-specific payloads into a shared schema.
 
 ## Environments
 
@@ -87,6 +89,56 @@ Returns full request/response XML/JSON payload sent to the insurance company and
 | `id` | number | Error ID |
 
 Returns analysis details including possible root causes, affected products, and resolution suggestions.
+
+### ManagementConsole Traffic (Read-Only)
+
+These tools require portal credentials. `IGW_PORTAL_USERNAME` / `IGW_PORTAL_PASSWORD` take precedence. Reusing `IGW_PANEL_USERNAME` / `IGW_PANEL_PASSWORD` requires the explicit `IGW_PORTAL_USE_PANEL_CREDENTIALS=true` opt-in.
+
+The portal environment is controlled by `IGW_PORTAL_BASE_URL`, not `IGW_BASE_URL`. Its default is the production portal; treat ManagementConsole reads as production even when the surrounding MCP instance is named test unless an explicit non-production portal URL is configured.
+
+#### `igw_management_console_search` — Search correlated portal logs
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `searchType` | string | `requestId`, `proposalId`, `referanceNo`, `exceptionLogId`, `policyId`, `jobId`, `insuranceCompanyProposalId`, or `platformProposalId` |
+| `value` | string | Exact identifier; keep it as a string |
+| `includeInternalLogs` | boolean | Include the portal's internal-log level; default false |
+| `direction` | string | `all`, `outgoing`, or `incoming`; default all |
+| `page` / `pageSize` | number | Page over structured search rows |
+
+The portal intentionally spells the reference mode `referanceNo`. One company proposal number may correlate to several insurer rows for the same main proposal, so do not assume the result belongs only to the company that issued the searched number.
+
+#### `igw_management_console_payload` — Retrieve a raw request or response
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `logId` | string | Log ID returned by search or log discovery |
+| `logType` | string | `Outgoing` or `Incoming` |
+| `payloadSide` | string | `sent` or `received` |
+| `offset` | number | Character offset for chunked retrieval |
+| `maxChars` | number | Chunk size, bounded by the MCP response limit |
+
+Direction mapping:
+
+| Log type | Sent | Received |
+|----------|------|----------|
+| `Outgoing` | IGW → insurance company request | Insurance company → IGW response |
+| `Incoming` | IGW → client response | Client → IGW request |
+
+The result reports payload format (`json`, `xml`, or `text`), total length, offset, `hasMore`, and `nextOffset`. Continue until `hasMore` is false when the complete raw pattern is needed.
+
+#### `igw_management_console_logs_list` — Discover incoming logs
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `beginDate` / `endDate` | string | ISO date or datetime; maximum seven-calendar-day inclusive range |
+| `agentId` | string or number | Optional final agent/acente ID |
+| `serviceOperationId` | string or number | Optional service-operation filter |
+| `outSourceProcessId` | string or number | Optional outsource-process filter |
+| `insuranceCompanyId` | string or number | Optional insurer filter |
+| `page` / `pageSize` | number | Server-side DataTables page |
+
+Use this discovery tool when no proposal-producing insurer number is available. Narrow by date and agent first, then use the returned log ID with the payload tool.
 
 ### Reports (Read-Only)
 
@@ -275,6 +327,19 @@ No parameters. Returns company IDs and names. Common companies:
 5. igw_errors_update_status → mark as investigated
 ```
 
+### Inspect an insurer integration pattern
+
+```
+1. Take a premium-producing insurer proposal number from the latest proposal
+2. igw_management_console_search (insuranceCompanyProposalId) → find all correlated company rows
+3. Select the relevant Outgoing logId
+4. igw_management_console_payload (Outgoing, sent) → IGW-to-company request
+5. igw_management_console_payload (Outgoing, received) → company-to-IGW response
+6. Follow nextOffset until hasMore=false for any chunked payload
+```
+
+If no insurer produced a proposal, find a reference number in the admin flow and search with `referanceNo`; otherwise use `igw_management_console_logs_list` with a narrow date range and agent filter.
+
 ### Company-specific error analysis
 
 ```
@@ -329,6 +394,9 @@ No parameters. Returns company IDs and names. Common companies:
 - **Service operations:** Teklif = Proposal (quote request), Police = Policy (policy issuance). These are the two main operation types.
 - **Free text search:** Use `ErrorQuery` parameter for searching specific error messages, XML tags, or insurance company error codes.
 - **Large responses:** Results are auto-truncated at 25,000 characters. If data seems incomplete, narrow filters or reduce page size.
+- **Insurer payloads:** Preserve raw XML/JSON/text. Similar-looking companies can still have materially different contracts.
+- **ManagementConsole identifiers:** Pass them as strings. Prefer a premium-producing company proposal number; it can reveal correlated requests for the other companies on the same proposal.
+- **Payload direction:** For insurer traffic use `logType=Outgoing`; `sent` is IGW-to-company and `received` is company-to-IGW.
 
 ## Safety Notes
 
