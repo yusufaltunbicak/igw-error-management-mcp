@@ -1,7 +1,7 @@
 {
   "name": "igw-error-management-mcp",
-  "version": "2.3.0",
-  "description": "MCP server for InsurGateway Error Management — track, analyze, and report errors",
+  "version": "2.4.0",
+  "description": "MCP server for InsurGateway error management and ManagementConsole traffic inspection",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -11,6 +11,10 @@
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "check": "npm run typecheck && npm test",
+    "prepack": "npm run build",
     "clean": "rm -rf dist"
   },
   "engines": {
@@ -22,7 +26,7 @@
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
-    "axios": "^1.7.9",
+    "axios": "^1.19.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {

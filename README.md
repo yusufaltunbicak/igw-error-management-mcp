@@ -13,6 +13,7 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for tr
 - **Error Actions** — Pin errors, update status, send reports, and file bug reports
 - **Reports** — Success rates, branch/agent/company breakdowns
 - **Lookups** — Search products and list insurance companies for filtering
+- **ManagementConsole Traffic** — Search successful and failed IGW traffic, then retrieve raw request/response payloads in either direction
 
 ## Setup
 
@@ -164,6 +165,9 @@ Once set up, try asking your AI assistant:
 - *"Bu hatanın durumunu 'Çözüldü' olarak güncelle"*
 - *"Hangi sigorta şirketleri aktif?"*
 - *"Kasko ürünlerini ara"*
+- *"Bu sigorta şirketi teklif numarasıyla IGW'nin şirkete gönderdiği request ve şirketten aldığı response'u getir"*
+- *"Bu referans numarasına bağlı outgoing ve incoming logları ara"*
+- *"Son yedi gündeki acente loglarını listele"*
 
 ## Tools
 
@@ -204,6 +208,29 @@ Once set up, try asking your AI assistant:
 | `igw_insurance_companies` | List available insurance companies — get company IDs for error filters |
 | `igw_products_list` | Full product catalog from the GatewayProUI panel — GW product code, insurance company product code(s), branch, online/offline, active status. Requires `IGW_PANEL_USERNAME` / `IGW_PANEL_PASSWORD` |
 | `igw_keys_list` | Full request/response key catalog from the GatewayProUI panel — key Id, name, value type, parameterized flag, resolved parameter (id + name), dependent flag, active status. Requires `IGW_PANEL_USERNAME` / `IGW_PANEL_PASSWORD` |
+
+### ManagementConsole Traffic (read-only)
+
+These tools read `portal.insurapps.net/ManagementConsole` and preserve insurer-specific payloads as raw JSON, XML, or text. They are registered only when portal credentials are available.
+
+`IGW_PORTAL_BASE_URL` controls this environment independently of `IGW_BASE_URL`. The default portal URL is production, so enabling these tools on a test MCP instance does not make the portal traffic test data.
+
+| Tool | Description |
+|------|-------------|
+| `igw_management_console_search` | Search correlated outgoing and incoming log rows by any ManagementConsole identifier, with paging and direction filters |
+| `igw_management_console_payload` | Retrieve a chunk of one raw sent or received payload by log ID and log type |
+| `igw_management_console_logs_list` | Discover incoming logs by a maximum seven-day date range and optional agent, operation, outsource-process, or insurance-company filters |
+
+`igw_management_console_search` supports all eight portal modes: `requestId`, `proposalId`, `referanceNo` (the portal's original spelling), `exceptionLogId`, `policyId`, `jobId`, `insuranceCompanyProposalId`, and `platformProposalId`. Identifiers are strings so long, alphanumeric, or zero-prefixed values remain exact. `includeInternalLogs: true` maps to the portal's internal-log level; `direction` can be `all`, `outgoing`, or `incoming`.
+
+Payload direction is explicit:
+
+| `logType` | `payloadSide: sent` | `payloadSide: received` |
+|-----------|---------------------|-------------------------|
+| `Outgoing` | IGW → insurance company request | Insurance company → IGW response |
+| `Incoming` | IGW → client response | Client → IGW request |
+
+Large payloads are returned in valid-JSON chunks. Continue with the returned `nextOffset` until `hasMore` is false; no common insurer schema is imposed on raw payloads.
 
 ### Panel Catalog Tools (read-only)
 
@@ -249,6 +276,28 @@ The panel tools above read from the GatewayProUI admin panel (`panel.insurapps.n
 | `IGW_PANEL_PASSWORD` | Panel login password |
 
 Without these the panel tools are simply not registered; everything else works as before.
+
+### ManagementConsole Credentials (optional)
+
+Add these environment variables to enable the ManagementConsole tools:
+
+| Variable | Description |
+|----------|-------------|
+| `IGW_PORTAL_BASE_URL` | Portal URL (default `https://portal.insurapps.net`) |
+| `IGW_PORTAL_USERNAME` | Portal login email |
+| `IGW_PORTAL_PASSWORD` | Portal login password |
+| `IGW_PORTAL_USE_PANEL_CREDENTIALS` | Set to `true` to explicitly reuse the complete panel credential pair for the portal |
+
+Set the portal-specific credential pair, or explicitly opt in to reusing the complete `IGW_PANEL_USERNAME` / `IGW_PANEL_PASSWORD` pair with `IGW_PORTAL_USE_PANEL_CREDENTIALS=true`. A partial portal credential pair disables the tools instead of mixing credentials from two sources. Credentials stay in the MCP process environment and are never returned by the tools.
+
+Example addition to any MCP server `env` block:
+
+```json
+{
+  "IGW_PORTAL_USERNAME": "your-portal-username",
+  "IGW_PORTAL_PASSWORD": "your-portal-password"
+}
+```
 
 ### Key Parameters for `igw_errors_list`
 

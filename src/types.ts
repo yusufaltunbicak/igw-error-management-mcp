@@ -84,6 +84,103 @@ export interface PanelConfig {
   password: string;
 }
 
+export interface ManagementConsoleConfig {
+  baseUrl: string;
+  username: string;
+  password: string;
+}
+
+export type ManagementConsoleSearchType =
+  | "requestId"
+  | "proposalId"
+  | "referanceNo"
+  | "exceptionLogId"
+  | "policyId"
+  | "jobId"
+  | "insuranceCompanyProposalId"
+  | "platformProposalId";
+
+export type ManagementConsoleDirection = "all" | "outgoing" | "incoming";
+export type ManagementConsoleLogType = "Outgoing" | "Incoming";
+export type ManagementConsolePayloadSide = "sent" | "received";
+export type ManagementConsolePayloadFormat = "json" | "xml" | "text";
+
+export interface ManagementConsoleAgentHeading {
+  id: string;
+  name: string;
+}
+
+export interface ManagementConsoleOutgoingLog {
+  logId: string;
+  referenceNo: string;
+  proposalId: string;
+  product: string;
+  action: string;
+  requestDate: string;
+  elapsedMs: string;
+}
+
+export interface ManagementConsoleIncomingLog {
+  logId: string;
+  referenceNo: string;
+  action: string;
+  requestDate: string;
+  elapsedMs: string;
+  machineName: string;
+}
+
+export interface ManagementConsoleParsedSearch {
+  agents: ManagementConsoleAgentHeading[];
+  outgoingLogs: ManagementConsoleOutgoingLog[];
+  incomingLogs: ManagementConsoleIncomingLog[];
+}
+
+export interface ManagementConsoleSearchParams {
+  searchType: ManagementConsoleSearchType;
+  value: string;
+  includeInternalLogs?: boolean;
+  direction?: ManagementConsoleDirection;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface ManagementConsolePayloadParams {
+  logId: string;
+  logType: ManagementConsoleLogType;
+  payloadSide: ManagementConsolePayloadSide;
+  offset?: number;
+  maxChars?: number;
+}
+
+export interface ManagementConsoleIncomingLogsParams {
+  beginDate: string;
+  endDate: string;
+  agentId?: string | number;
+  serviceOperationId?: string | number;
+  outSourceProcessId?: string | number;
+  insuranceCompanyId?: string | number;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface ManagementConsoleIncomingLogsResponse {
+  data: ManagementConsoleIncomingListLog[];
+  draw: number;
+  recordsTotal: number;
+  recordsFiltered: number;
+}
+
+export interface ManagementConsoleIncomingListLog {
+  logId: string;
+  referenceNo: string;
+  agentId: string;
+  action: string;
+  requestDate: string;
+  elapsedMs: string;
+  machineName: string;
+  ipAddress: string;
+}
+
 /** Row shape returned by GatewayProUI /Product/GetProducts */
 export interface PanelProduct {
   Id: number;
