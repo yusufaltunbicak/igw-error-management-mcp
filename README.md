@@ -271,15 +271,17 @@ Read-only walk of the panel's Parameter → Value → Cross → Dependency hiera
 
 | Tool | Purpose |
 |------|---------|
-| `igw_parameter_get` | One parameter (Id or name) with all of its values |
-| `igw_crosses_list` | Crosses of a parameter(-value); company/product/agent-type filters, optional readable dependencies |
-| `igw_cross_dependencies` | Dependency rows of one cross (crossId) with a readable expression |
-| `igw_key_dependencies` | Dependency rows of one key (Key screen's blue-icon table) |
-| `igw_agents_search` | Agent search with the full parent chain |
-| `igw_values_for_context` | Contact values under a context (agent + conditions); eliminates crosses and explains why |
-| `igw_compare_products` | Value × product grid for one company (Product -1 covers all) |
-| `igw_value_trace` | Key + sent value → which parameter value/cross definition it comes from |
-| `igw_crosses_bulk_check` | Bulk-check a company table vs IGW definitions (OK / OK_GENEL fazla-açık / EKSIK / KOD_YOK + FAZLA list, Excel-friendly TSV) |
+| `igw_parameter_get` | One parameter (Id or name) with all of its values and the keys that use it |
+| `igw_crosses_list` | Crosses of a parameter or one value; company/product/agent-type/value filters, readable dependencies, and a warning on every `0` cross IUP agents can reach |
+| `igw_cross_dependencies` | Dependency rows of one cross with a readable expression, IUP-closed flag and `0` warning |
+| `igw_key_dependencies` | Dependency rows of one key (the Key screen's blue-icon table) |
+| `igw_agents_search` | Agent search with the full parent chain and whether the agent sits under InsurUp Parent (700) |
+| `igw_values_for_context` | For a company + product + context (default: an IUP agent under 700), which value is actually sent, which are unsupported (`0`), missing or undecided, and which condition eliminated each cross |
+| `igw_compare_products` | Same company, several products: per value, what each product sends in the context (Product -1 applies to all; names expand to every matching product) |
+| `igw_value_trace` | Key + the value seen in a quote log → the parameter value and cross it comes from, with its dependency and whether it is selected in the context |
+| `igw_crosses_bulk_check` | Company table vs IGW: OK / EKSIK / BELIRSIZ / KOD_YOK per row, plus FAZLA, FAZLA_ACIK (open via Product -1 or an unconditional cross) and UYARI_0, as an Excel-pasteable TSV |
+
+Insurer codes are never guessed: statistic codes (e.g. Ak `608`, `ANK`) map to IGW keys through `codeMap`, and insurer product/vehicle codes are translated through the crosses of `productKey` / `vehicleKey`. When several crosses pass for one value, product-specific beats Product -1 and conditional beats unconditional; the panel list does not expose *Bağımlılık Sırası* or *Acenteye özel mi?*, so that order is an approximation.
 
 Read-only by design — no cross/dependency write operations exist.
 

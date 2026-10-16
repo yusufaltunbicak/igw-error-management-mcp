@@ -290,21 +290,29 @@ These walk the panel's Parameter → Value → Cross → Dependency hierarchy pl
 
 | Tool | Purpose |
 |------|---------|
-| `igw_parameter_get` | One parameter (Id or name) with all of its values (Text, OriginalValue, Crossed, active) |
-| `igw_crosses_list` | Crosses of a parameter (optionally one value), filterable by company/product/agent type/cross value; `includeDependencies: true` adds readable dependency text |
+| `igw_parameter_get` | One parameter (Id or name) with all of its values and the keys that use it |
+| `igw_crosses_list` | Crosses of a parameter or one value, filterable by company/product/agent type/cross value; `includeDependencies: true` adds readable dependency text; `onlyWarnings: true` lists `0` crosses that IUP agents can reach |
 | `igw_cross_dependencies` | Dependency rows of one cross (crossId) with a readable expression |
 | `igw_key_dependencies` | Dependency rows of one key (the blue-icon table on the Key screen) |
-| `igw_agents_search` | Agent search with parent chain (agent → parent → …) |
-| `igw_values_for_context` | Evaluate a parameter's values under a context (agentId + "KeyName=Value" pairs); returns applicable crosses and, for each eliminated cross, WHICH condition eliminated it |
-| `igw_compare_products` | Per value × product grid of crosses of one company (product -1 counts as covering all products) |
-| `igw_value_trace` | Given key (Id or name) + the value sent to the company, find which parameter value/cross definition produces it (read from crosses, never guessed) |
-| `igw_crosses_bulk_check` | Check a company table (product, stat code, value code rows) against IGW definitions: OK / OK_GENEL (fazla açık: only a Product -1 or independent definition covers it) / EKSIK / KOD_YOK, plus company-level FAZLA list; output includes an Excel-friendly TSV |
+| `igw_agents_search` | Agent search with the parent chain (agent → parent → …) |
+| `igw_values_for_context` | Company + product (+ agentId / "Key=Value" context, default an IUP agent under 700): per value GECERLI / DESTEKLENMIYOR / TANIM_YOK / BELIRSIZ, the sent value, and why every other cross was eliminated |
+| `igw_compare_products` | Same company, several products (Id or name): per value what each product sends; by default only values that differ |
+| `igw_value_trace` | Key (Id or name) + value seen in the log → parameter value and cross it comes from, its dependency, and whether it is selected in the context |
+| `igw_crosses_bulk_check` | Company table rows → OK / EKSIK / BELIRSIZ / KOD_YOK, plus FAZLA / FAZLA_ACIK / UYARI_0 findings and an Excel TSV. Statistic codes need `codeMap` (code → key) or a row `key`; product/vehicle codes need `productKey` / `vehicleKey` |
+
+Workflows:
+- "Acente X değeri istiyor, tanımlı mı, neden görünmüyor?" → `igw_values_for_context` with the agent, company, product and `valueText`; read `status`, `eliminated[].reason` and `warning`.
+- "Standart Kasko'da var, Markalı'da yok" → `igw_compare_products`.
+- "Logda şirkete giden değer hangi tanımdan?" → `igw_value_trace`.
+- Company coverage table (e.g. Ak KASKO_ISTATISTIK_LISTESI) → first find the IGW key for each statistic code (`igw_keys_list`, `igw_parameter_get`), then `igw_crosses_bulk_check` with `codeMap`. Never assume a statistic code is a key Id.
 
 Domain rules baked into these tools (do not contradict them when interpreting output):
 
 - **Cross Değeri** is the value that actually goes to the company; all comparisons happen on it. `CrossValue: "0"` means "this value does not work in this company/product/agent context" — report as unsupported, not as a real value.
 - **Ürün Id -1 (Tanımsız)** applies to all of the company's products.
 - **Cross İsmi** is IGW's own label; it is not used in IUP, so differing from insurer tables is not an error.
+- **IUP 0 warning**: a `0` on a cross that IUP agents (Parent 700) can reach must be reported as a warning.
+- **Yakınsama** is returned but not used in IUP.
 - **Parent ID (Key 5241) ≠ 700** means the cross is closed to IUP (InsurUp Parent). IUP agents live under parent 700; -999 = SigortaPro Parent, -900 = BrokerPro Parent, 0 = All Agents.
 - **Dependency operators**: `=`, `!=`, `>`, `<`, `[==]` (contains), `[!=]` (does not contain). Rows combine within a group by their `DependencyConnectionTypeToOtherKey`, groups combine by `DependencyGroupConnectionTypeToOtherGroup` (default `&&`).
 - Key ↔ parameter mapping is read from the key list (`Key/GetKeys` includes `ParameterId`); e.g. Key 17 "IMM Limiti" → Parameter 4 "IMM Limitleri".
