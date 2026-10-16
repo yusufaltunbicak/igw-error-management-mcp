@@ -265,6 +265,24 @@ The GatewayProUI panel (`panel.insurapps.net`) exposes many more catalogs. All o
 
 > The panel's DataTables endpoints 500 on per-column server-side search and ignore global search, so filtering is done locally after fetching. For the three paged tools this means filters apply to the current page only — they do not scan the whole table.
 
+### Parameter / Cross / Dependency Tools (read-only)
+
+Read-only walk of the panel's Parameter → Value → Cross → Dependency hierarchy plus the agent list (`IGW_PANEL_USERNAME` required, cached ~10 min):
+
+| Tool | Purpose |
+|------|---------|
+| `igw_parameter_get` | One parameter (Id or name) with all of its values |
+| `igw_crosses_list` | Crosses of a parameter(-value); company/product/agent-type filters, optional readable dependencies |
+| `igw_cross_dependencies` | Dependency rows of one cross (crossId) with a readable expression |
+| `igw_key_dependencies` | Dependency rows of one key (Key screen's blue-icon table) |
+| `igw_agents_search` | Agent search with the full parent chain |
+| `igw_values_for_context` | Contact values under a context (agent + conditions); eliminates crosses and explains why |
+| `igw_compare_products` | Value × product grid for one company (Product -1 covers all) |
+| `igw_value_trace` | Key + sent value → which parameter value/cross definition it comes from |
+| `igw_crosses_bulk_check` | Bulk-check a company table vs IGW definitions (OK / OK_GENEL fazla-açık / EKSIK / KOD_YOK + FAZLA list, Excel-friendly TSV) |
+
+Read-only by design — no cross/dependency write operations exist.
+
 ### Panel Credentials (optional)
 
 The panel tools above read from the GatewayProUI admin panel (`panel.insurapps.net`) instead of the gateway API. Add these env vars to enable them:

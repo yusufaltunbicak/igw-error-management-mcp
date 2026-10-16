@@ -18,6 +18,7 @@ import { registerLookupTools } from "./tools/lookups.js";
 import { registerProductTools } from "./tools/products.js";
 import { registerKeyTools } from "./tools/keys.js";
 import { registerPanelCatalogTools } from "./tools/panel-catalog.js";
+import { registerParameterCrossTools } from "./tools/parameter-cross.js";
 import { registerManagementConsoleTools } from "./tools/management-console.js";
 
 function getRequiredEnv(name: string): string {
@@ -40,7 +41,7 @@ const api = new IgwApiClient(config);
 
 const server = new McpServer({
   name: "igw-error-management",
-  version: "2.4.0",
+  version: "2.5.0",
 });
 
 registerErrorTools(server, api);
@@ -60,6 +61,7 @@ if (panelUsername && panelPassword) {
   registerProductTools(server, panel);
   registerKeyTools(server, panel);
   registerPanelCatalogTools(server, panel);
+  registerParameterCrossTools(server, panel);
 } else {
   console.error(
     "IGW_PANEL_USERNAME / IGW_PANEL_PASSWORD not set — panel tools (products, keys, branches, agents, users, logs, …) disabled"

@@ -16,7 +16,7 @@ function tr(value: unknown): string {
  * arrays), drop rows from the end until it fits and flag the truncation —
  * unlike the generic truncateResult, this never emits broken JSON.
  */
-function serializeFitting(
+export function serializeFitting(
   meta: Record<string, unknown>,
   resultKey: string,
   rows: Row[]
