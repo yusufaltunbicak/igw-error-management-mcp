@@ -1,6 +1,6 @@
 {
   "name": "igw-error-management-mcp",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "MCP server for InsurGateway error management and ManagementConsole traffic inspection",
   "type": "module",
   "main": "dist/index.js",
@@ -15,7 +15,8 @@
     "test": "npm run build && node --test test/*.test.mjs",
     "check": "npm run typecheck && npm test",
     "prepack": "npm run build",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test:e2e": "npm run build && IGW_PANEL_E2E=1 node --test test/parameter-cross.test.mjs"
   },
   "engines": {
     "node": ">=18"

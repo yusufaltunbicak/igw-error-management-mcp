@@ -218,6 +218,81 @@ export interface PanelParameter {
   Dependent: boolean;
 }
 
+/** Row shape returned by GatewayProUI /ParameterValue/GetParameterValues?parameterId=… */
+export interface PanelParameterValue {
+  ParameterId: number;
+  /** Human-readable label of the value (e.g. "30.000-90.000-30.000") */
+  Text: string;
+  /** Original value sent to the parameter system (OriginalValue) */
+  Value: string;
+  /** Whether any cross is defined for this value */
+  Crossed: boolean;
+  /** Air-specific flag (special handling on the panel) */
+  IsAirSpecific: boolean;
+  /** Active / passive */
+  Status: boolean;
+}
+
+/** Row shape returned by GatewayProUI /ParameterValueCrossed/GetParameterValueCrosses */
+export interface PanelCross {
+  ParameterValueCrossedId: number;
+  ParameterId: number;
+  /** The parameter value (OriginalValue) this cross belongs to */
+  OriginalValue: string;
+  InsuranceCompanyId: number;
+  InsuranceCompanyName: string | null;
+  /** -1 / Tanımsız = cross applies to all of the company's products */
+  ProductId: number | null;
+  ProductName: string | null;
+  /** Tanımsız 0 / Acente 1 / Broker 2 / Banka 3 / Sigorta Şirketi 4 */
+  AgentType: number;
+  /** IGW's own label for the cross — never used in IUP, differing is not an error */
+  CrossName: string;
+  /** The value that actually goes to the company ("0" = unsupported in this context) */
+  CrossValue: string;
+  /** True when the cross has dependency conditions */
+  Dependent: boolean;
+  /** Convergence flag — not used in IUP */
+  IsConverged: boolean;
+}
+
+/** Row shape returned by GatewayProUI /ParameterValueCrossed/GetParameterValueCrossedDependencyList */
+export interface PanelCrossDependency {
+  Id: number;
+  ParameterValueCrossedId: number;
+  ParameterId: number;
+  ParameterValue: string;
+  InsuranceCompanyId: number;
+  ProductId: number;
+  CrossValue: string;
+  /** The key whose condition this row evaluates (e.g. Acente ID / Parent ID) */
+  DependentKeyId: number;
+  DependentKeyName: string;
+  /** The key value the condition compares against */
+  DependentKeyValue: string;
+  /** =, !=, >, <, [==] (contains), [!=] (does not contain) */
+  DependencyType: string;
+  DependencyGroupNo: number | null;
+  /** How this dependency group connects to the next group (&& / ||) */
+  DependencyGroupConnectionTypeToOtherGroup: string | null;
+  /** How this row connects to the next row inside its group (&& / ||) */
+  DependencyConnectionTypeToOtherKey: string | null;
+  DependencyExecutionLevelForOtherKey: number | null;
+}
+
+/** Row shape returned by GatewayProUI /Key/GetKeyDependencyList?keyId=… */
+export interface PanelKeyDependency {
+  Id: number;
+  DependentKeyId: number;
+  DependentKeyName: string;
+  DependentKeyValue: string;
+  KeyName: string;
+  KeyId: number;
+  DependencyType: string;
+  DependencyConnectionTypeToOtherKey: string | null;
+  DependencyExecutionLevelForOtherKey: number | null;
+}
+
 export interface IgwPinErrorRequest {
   errorId: number;
   isPinned: boolean;

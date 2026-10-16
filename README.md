@@ -265,6 +265,26 @@ The GatewayProUI panel (`panel.insurapps.net`) exposes many more catalogs. All o
 
 > The panel's DataTables endpoints 500 on per-column server-side search and ignore global search, so filtering is done locally after fetching. For the three paged tools this means filters apply to the current page only — they do not scan the whole table.
 
+### Parameter / Cross / Dependency Tools (read-only)
+
+Read-only walk of the panel's Parameter → Value → Cross → Dependency hierarchy plus the agent list (`IGW_PANEL_USERNAME` required, cached ~10 min):
+
+| Tool | Purpose |
+|------|---------|
+| `igw_parameter_get` | One parameter (Id or name) with all of its values and the keys that use it |
+| `igw_crosses_list` | Crosses of a parameter or one value; company/product/agent-type/value filters, readable dependencies, and a warning on every `0` cross IUP agents can reach |
+| `igw_cross_dependencies` | Dependency rows of one cross with a readable expression, IUP-closed flag and `0` warning |
+| `igw_key_dependencies` | Dependency rows of one key (the Key screen's blue-icon table) |
+| `igw_agents_search` | Agent search with the full parent chain and whether the agent sits under InsurUp Parent (700) |
+| `igw_values_for_context` | For a company + product + context (default: an IUP agent under 700), which value is actually sent, which are unsupported (`0`), missing or undecided, and which condition eliminated each cross |
+| `igw_compare_products` | Same company, several products: per value, what each product sends in the context (Product -1 applies to all; names expand to every matching product) |
+| `igw_value_trace` | Key + the value seen in a quote log → the parameter value and cross it comes from, with its dependency and whether it is selected in the context |
+| `igw_crosses_bulk_check` | Company table vs IGW: OK / EKSIK / BELIRSIZ / KOD_YOK per row, plus FAZLA, FAZLA_ACIK (open via Product -1 or an unconditional cross) and UYARI_0, as an Excel-pasteable TSV |
+
+Insurer codes are never guessed: statistic codes (e.g. Ak `608`, `ANK`) map to IGW keys through `codeMap`, and insurer product/vehicle codes are translated through the crosses of `productKey` / `vehicleKey`. When several crosses pass for one value, product-specific beats Product -1 and conditional beats unconditional; the panel list does not expose *Bağımlılık Sırası* or *Acenteye özel mi?*, so that order is an approximation.
+
+Read-only by design — no cross/dependency write operations exist.
+
 ### Panel Credentials (optional)
 
 The panel tools above read from the GatewayProUI admin panel (`panel.insurapps.net`) instead of the gateway API. Add these env vars to enable them:

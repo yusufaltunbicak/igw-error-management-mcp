@@ -2,7 +2,7 @@
 name: igw-error-management
 description: MCP skill for IGW (InsurGateway) error management and ManagementConsole traffic inspection across test and production environments. Invoke for IGW errors, insurer request/response patterns, success rates, or reports.
 author: yusufaltunbicak
-version: "2.4.0"
+version: "2.5.0"
 tags:
   - igw
   - insurgateway
@@ -283,6 +283,41 @@ Server-side paged (huge tables; filters narrow the fetched page only, they do **
 | `igw_action_logs_list` | ~5M | requestId, userName, responseStatus, requestChannel, machineName |
 
 Note: the panel's DataTables endpoints 500 on server-side column search and ignore global search, so filtering is client-side after fetch. For the three paged tools, filters therefore only narrow the current page — to find a specific row walk pages with `page`/`pageSize`.
+
+### Parameter / Cross / Dependency tools (read-only, GatewayProUI)
+
+These walk the panel's Parameter → Value → Cross → Dependency hierarchy plus the agent list. All read-only, `IGW_PANEL_USERNAME` required:
+
+| Tool | Purpose |
+|------|---------|
+| `igw_parameter_get` | One parameter (Id or name) with all of its values and the keys that use it |
+| `igw_crosses_list` | Crosses of a parameter or one value, filterable by company/product/agent type/cross value; `includeDependencies: true` adds readable dependency text; `onlyWarnings: true` lists `0` crosses that IUP agents can reach |
+| `igw_cross_dependencies` | Dependency rows of one cross (crossId) with a readable expression |
+| `igw_key_dependencies` | Dependency rows of one key (the blue-icon table on the Key screen) |
+| `igw_agents_search` | Agent search with the parent chain (agent → parent → …) |
+| `igw_values_for_context` | Company + product (+ agentId / "Key=Value" context, default an IUP agent under 700): per value GECERLI / DESTEKLENMIYOR / TANIM_YOK / BELIRSIZ, the sent value, and why every other cross was eliminated |
+| `igw_compare_products` | Same company, several products (Id or name): per value what each product sends; by default only values that differ |
+| `igw_value_trace` | Key (Id or name) + value seen in the log → parameter value and cross it comes from, its dependency, and whether it is selected in the context |
+| `igw_crosses_bulk_check` | Company table rows → OK / EKSIK / BELIRSIZ / KOD_YOK, plus FAZLA / FAZLA_ACIK / UYARI_0 findings and an Excel TSV. Statistic codes need `codeMap` (code → key) or a row `key`; product/vehicle codes need `productKey` / `vehicleKey` |
+
+Workflows:
+- "Acente X değeri istiyor, tanımlı mı, neden görünmüyor?" → `igw_values_for_context` with the agent, company, product and `valueText`; read `status`, `eliminated[].reason` and `warning`.
+- "Standart Kasko'da var, Markalı'da yok" → `igw_compare_products`.
+- "Logda şirkete giden değer hangi tanımdan?" → `igw_value_trace`.
+- Company coverage table (e.g. Ak KASKO_ISTATISTIK_LISTESI) → first find the IGW key for each statistic code (`igw_keys_list`, `igw_parameter_get`), then `igw_crosses_bulk_check` with `codeMap`. Never assume a statistic code is a key Id.
+
+Domain rules baked into these tools (do not contradict them when interpreting output):
+
+- **Cross Değeri** is the value that actually goes to the company; all comparisons happen on it. `CrossValue: "0"` means "this value does not work in this company/product/agent context" — report as unsupported, not as a real value.
+- **Ürün Id -1 (Tanımsız)** applies to all of the company's products.
+- **Cross İsmi** is IGW's own label; it is not used in IUP, so differing from insurer tables is not an error.
+- **IUP 0 warning**: a `0` on a cross that IUP agents (Parent 700) can reach must be reported as a warning.
+- **Yakınsama** is returned but not used in IUP.
+- **Parent ID (Key 5241) ≠ 700** means the cross is closed to IUP (InsurUp Parent). IUP agents live under parent 700; -999 = SigortaPro Parent, -900 = BrokerPro Parent, 0 = All Agents.
+- **Dependency operators**: `=`, `!=`, `>`, `<`, `[==]` (contains), `[!=]` (does not contain). Rows combine within a group by their `DependencyConnectionTypeToOtherKey`, groups combine by `DependencyGroupConnectionTypeToOtherGroup` (default `&&`).
+- Key ↔ parameter mapping is read from the key list (`Key/GetKeys` includes `ParameterId`); e.g. Key 17 "IMM Limiti" → Parameter 4 "IMM Limitleri".
+
+If a panel definition looks correct but the value still does not appear in IUP, suggest the user check in Postman: `GET https://gatewayapi.insurapps.net/api/parameters/{parameterId}/CrossValues/InsuranceCompanies/{companyId}/ForAgent?includeNotAgentDependent=true` — this returns the values shown to IUP-Parent agents. The MCP does NOT connect to this endpoint.
 
 #### `igw_insurance_companies` — List all insurance companies
 

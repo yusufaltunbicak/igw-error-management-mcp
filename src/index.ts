@@ -18,6 +18,7 @@ import { registerLookupTools } from "./tools/lookups.js";
 import { registerProductTools } from "./tools/products.js";
 import { registerKeyTools } from "./tools/keys.js";
 import { registerPanelCatalogTools } from "./tools/panel-catalog.js";
+import { registerParameterCrossTools } from "./tools/parameter-cross.js";
 import { registerManagementConsoleTools } from "./tools/management-console.js";
 
 function getRequiredEnv(name: string): string {
@@ -38,10 +39,24 @@ const config: IgwAuthConfig = {
 
 const api = new IgwApiClient(config);
 
-const server = new McpServer({
-  name: "igw-error-management",
-  version: "2.4.0",
-});
+const SERVER_INSTRUCTIONS = `InsurGateway (IGW) error management, ManagementConsole traffic and GatewayProUI panel definitions.
+
+Parameter / Cross / Dependency rules (InsurUp):
+- Cross Değeri is the value actually sent to the insurer; all comparisons use it. Cross İsmi is IGW's own label, unused in IUP; a different label is not an error.
+- Cross Değeri 0 means the value does not work for that company/product/agent context. A 0 on a cross that IUP agents (InsurUp Parent 700) can reach must be reported as a warning.
+- Ürün -1 (Tanımsız) applies to every product of the company. Yakınsama (convergence) is not used in IUP.
+- A cross that requires Parent ID ≠ 700 is closed to IUP. Special agents: 700 InsurUp Parent, -999 SigortaPro Parent, -900 BrokerPro Parent, 0 All Agents.
+- Insurer codes (e.g. Ak 608, ANK) are not IGW keys; mappings are read from the relevant parameter's crosses, never guessed.
+
+If a panel definition looks correct but the value still does not show in IUP, suggest the user check this endpoint in Postman (this MCP does not call it): GET https://gatewayapi.insurapps.net/api/parameters/{parameterId}/CrossValues/InsuranceCompanies/{companyId}/ForAgent?includeNotAgentDependent=true — it returns the values served to agents under InsurUp Parent (700).`;
+
+const server = new McpServer(
+  {
+    name: "igw-error-management",
+    version: "2.5.0",
+  },
+  { instructions: SERVER_INSTRUCTIONS }
+);
 
 registerErrorTools(server, api);
 registerErrorActionTools(server, api);
@@ -60,6 +75,7 @@ if (panelUsername && panelPassword) {
   registerProductTools(server, panel);
   registerKeyTools(server, panel);
   registerPanelCatalogTools(server, panel);
+  registerParameterCrossTools(server, panel);
 } else {
   console.error(
     "IGW_PANEL_USERNAME / IGW_PANEL_PASSWORD not set — panel tools (products, keys, branches, agents, users, logs, …) disabled"
